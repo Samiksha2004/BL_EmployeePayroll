@@ -2,7 +2,7 @@ package com.bridgelabz.employeepayrollapp.controller;
 
 import com.bridgelabz.employeepayrollapp.model.Employee;
 import com.bridgelabz.employeepayrollapp.service.EmployeeService;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import com.bridgelabz.employeepayrollapp.exception.ResourceNotFoundException;
 
@@ -12,22 +12,13 @@ import java.util.List;
 @RequestMapping("/employees")
 public class EmployeeController {
 
-    private final EmployeeService employeeService;
-
-    public EmployeeController(EmployeeService employeeService) {
-        this.employeeService = employeeService;
-    }
+    @Autowired
+    private EmployeeService employeeService;  // Dependency Injection of Service Layer
 
     @PostMapping
-    public Employee createEmployee(@RequestBody Employee employee) {
-        return employeeService.saveEmployee(employee);
+    public Employee addEmployee(@RequestBody Employee employee) {
+        return employeeService.addEmployee(employee); // Delegating to Service Layer
     }
-
-    @GetMapping
-    public List<Employee> getAllEmployees() {
-        return employeeService.getAllEmployees();
-    }
-
 
     @GetMapping("/{id}")
     public Employee getEmployeeById(@PathVariable Long id) {
@@ -35,15 +26,14 @@ public class EmployeeController {
                 .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
     }
 
-
-    @PutMapping("/{id}")
-    public Employee updateEmployee(@PathVariable Long id, @RequestBody Employee employee) {
-        return employeeService.updateEmployee(id, employee);
+    @GetMapping
+    public List<Employee> getAllEmployees() {
+        return employeeService.getAllEmployees();
     }
 
-    @DeleteMapping("/{id}") // DELETE request for removing an employee
-    public ResponseEntity<String> deleteEmployee(@PathVariable Long id) {
-        employeeService.deleteEmployee(id);
-        return ResponseEntity.ok("Employee deleted successfully.");
+    // Fix for "/" route
+    @GetMapping(value = {"/", ""}, produces = "text/plain")
+    public String home() {
+        return "Welcome to the Employee API!";
     }
 }
