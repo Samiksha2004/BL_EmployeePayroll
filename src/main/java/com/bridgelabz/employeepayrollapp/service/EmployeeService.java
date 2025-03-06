@@ -1,8 +1,8 @@
 package com.bridgelabz.employeepayrollapp.service;
 
+import com.bridgelabz.employeepayrollapp.exception.ResourceNotFoundException;
 import com.bridgelabz.employeepayrollapp.model.Employee;
 import com.bridgelabz.employeepayrollapp.repository.EmployeeRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -11,39 +11,41 @@ import java.util.Optional;
 @Service
 public class EmployeeService {
 
-    @Autowired
-    private EmployeeRepository repository;  // Use only one repository reference
+    private final EmployeeRepository repository;
+
+    // ✅ Constructor Injection (Better for Unit Testing)
+    public EmployeeService(EmployeeRepository repository) {
+        this.repository = repository;
+    }
 
     public List<Employee> getAllEmployees() {
         return repository.findAll();
     }
 
     public Optional<Employee> getEmployeeById(Long id) {
-        return repository.findById(id);
+        return repository.findById(id);  // ✅ Correct approach
     }
 
-    public Employee addEmployee(Employee employee) {
-        return repository.save(employee);
-    }
 
-    public Employee saveEmployee(Employee employee) {  // This method is the same as addEmployee
+    public Employee saveEmployee(Employee employee) {
         return repository.save(employee);
     }
 
     public Employee updateEmployee(Long id, Employee updatedEmployee) {
-        Optional<Employee> existingEmployee = repository.findById(id);
+        Employee existingEmployee = repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with ID: " + id));
 
-        if (existingEmployee.isPresent()) {
-            Employee employee = existingEmployee.get();
-            employee.setName(updatedEmployee.getName());
-            employee.setDepartment(updatedEmployee.getDepartment());
-            employee.setSalary(updatedEmployee.getSalary());
-            return repository.save(employee);
-        }
-        return null; // Consider throwing an exception instead
+        existingEmployee.setName(updatedEmployee.getName());
+        existingEmployee.setDepartment(updatedEmployee.getDepartment());
+        existingEmployee.setSalary(updatedEmployee.getSalary());
+
+        return repository.save(existingEmployee);
     }
 
     public void deleteEmployee(Long id) {
+        if (!repository.existsById(id)) {
+            throw new ResourceNotFoundException("Employee not found with ID: " + id);
+        }
         repository.deleteById(id);
     }
 }
